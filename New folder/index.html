@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ismail | Creative Technologist</title>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['Courier New', 'monospace'],
+                    },
+                    colors: {
+                        'brand-black': '#050000',
+                        'brand-red': '#dc2626',
+                        'brand-dark-red': '#450a0a',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 15s linear infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050000;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        @media (pointer: fine) {
+            body { cursor: none; }
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        .cursor-dot,
+        .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #dc2626;
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .cursor-dot, .cursor-outline { display: none; }
+        }
+
+        /* --- NOISE OVERLAY --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .section {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* --- ADVANCED GLASS CARD --- */
+        .glass-panel {
+            position: relative;
+            background: rgba(20, 5, 5, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2.5rem;
+            overflow: hidden;
+            transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .glass-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(220, 38, 38, 0.1),
+                transparent 40%
+            );
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .glass-panel::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px; /* Border width */
+            background: radial-gradient(
+                400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(255, 255, 255, 0.4), 
+                transparent 40%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .glass-panel:hover::before,
+        .glass-panel:hover::after {
+            opacity: 1;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .text-gradient-red {
+            background: linear-gradient(to right, #ef4444, #b91c1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Expert/Technical Grid Lines */
+        .grid-line {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .grid-v { width: 1px; height: 100%; top: 0; }
+        .grid-h { height: 1px; width: 100%; left: 0; }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        
+        html.lenis {
+            height: auto;
+        }
+        .lenis.lenis-smooth {
+            scroll-behavior: auto;
+        }
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+        .lenis.lenis-scrolling iframe {
+            pointer-events: none;
+        }
+
+        /* CONTACT MODAL */
+        #contact-modal {
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        #contact-modal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #contact-modal:not(.hidden) {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* 3D PREVIEW - CUBE */
+        .preview-cube-scene {
+            perspective: 800px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cube-wireframe {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: spin-slow 12s linear infinite;
+        }
+        .cube-face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .cube-face:nth-child(1) { transform: rotateY(0deg) translateZ(50px); }
+        .cube-face:nth-child(2) { transform: rotateY(90deg) translateZ(50px); }
+        .cube-face:nth-child(3) { transform: rotateY(180deg) translateZ(50px); }
+        .cube-face:nth-child(4) { transform: rotateY(-90deg) translateZ(50px); }
+        .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(50px); }
+        .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(50px); }
+
+        /* 3D PREVIEW - UI STACK */
+        .ui-stack {
+            position: relative;
+            width: 200px;
+            height: 140px;
+            transform-style: preserve-3d;
+            transform: rotateX(15deg) rotateY(-15deg);
+            animation: float 4s ease-in-out infinite;
+        }
+        .ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(180deg, rgba(20,20,20,0.9), rgba(0,0,0,0.95));
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .ui-layer:nth-child(1) { transform: translateZ(-20px); opacity: 0.6; width: 90%; left: 5%; top: -10px; }
+        .ui-layer:nth-child(2) { transform: translateZ(0px); }
+        .ui-layer:nth-child(3) { transform: translateZ(30px); width: 60%; height: 40px; right: -20px; bottom: 20px; background: rgba(220,38,38,0.2); border-color: rgba(220,38,38,0.5); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Cursor Elements -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <!-- Noise Texture -->
+    <div class="noise-overlay"></div>
+
+    <!-- Technical Grid Background -->
+    <div class="grid-line grid-v left-[10%]"></div>
+    <div class="grid-line grid-v left-[50%]"></div>
+    <div class="grid-line grid-v right-[10%]"></div>
+    <div class="grid-line grid-h top-[20%]"></div>
+    <div class="grid-line grid-h bottom-[20%]"></div>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Nav -->
+    <nav class="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center mix-blend-exclusion">
+        <div class="text-xl font-bold tracking-widest uppercase font-display reveal-text cursor-hover">Ismail<span class="text-red-600">.DEV</span></div>
+        <div class="flex gap-6 items-center reveal-text">
+            <span class="text-[10px] text-gray-400 hidden md:block font-mono tracking-widest">STATUS: <span class="text-green-400 animate-pulse">AVAILABLE</span></span>
+            <button onclick="toggleModal()" class="cursor-hover group relative px-6 py-2 overflow-hidden border border-red-500/30 text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-red-500">
+                <span class="relative z-10 group-hover:text-black transition-colors duration-300">Contact</span>
+                <div class="absolute inset-0 h-full w-full scale-x-0 bg-red-600 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100"></div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTACT MODAL -->
+    <div id="contact-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md hidden">
+        <div class="relative w-full max-w-md p-8 bg-zinc-900/90 border border-red-500/20 rounded-2xl shadow-[0_0_50px_rgba(220,38,38,0.2)] transform transition-transform scale-100">
+            <button onclick="toggleModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <h3 class="font-display text-3xl font-bold mb-2 text-white">Establish Connection</h3>
+            <p class="text-gray-400 text-sm mb-8">Select your preferred communication channel.</p>
+            
+            <div class="space-y-4">
+                <a href="https://wa.me/923154995507" target="_blank" class="flex items-center gap-4 p-4 border border-white/10 rounded-xl hover:bg-white/5 hover:border-green-500/50 transition-all group cursor-hover">
+                    <div class="w-10 h-10 rounded-full bg-green-900/30 flex items-center justify-center text-green-500 group-hover:bg-green-500 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white">WhatsApp</div>
+                        <div class="text-xs text-gray-500">Direct & Fast</div>
+                    </div>
+                </a>
+                
+                <a href="https://www.instagram.com/hafiz__lsmail?igsh=MTIyMmNtMGtobm5saw==" target="_blank" class="flex items-center gap-4 p-4 border border-white/10 rounded-xl hover:bg-white/5 hover:border-pink-500/50 transition-all group cursor-hover">
+                    <div class="w-10 h-10 rounded-full bg-pink-900/30 flex items-center justify-center text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white">Instagram</div>
+                        <div class="text-xs text-gray-500">Visual Portfolio</div>
+                    </div>
+                </a>
+                
+                <a href="mailto:hafizmismaildev@gmail.com" class="flex items-center gap-4 p-4 border border-white/10 rounded-xl hover:bg-white/5 hover:border-red-500/50 transition-all group cursor-hover">
+                    <div class="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white">Email</div>
+                        <div class="text-xs text-gray-500">hafizmismaildev@gmail.com</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="section items-start pl-[5%] md:pl-[10%]">
+        <div class="max-w-5xl relative">
+            <!-- Decorative Badge -->
+            <div class="reveal-text inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-8 backdrop-blur-md">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                </span>
+                <span class="text-gray-300 text-xs font-mono tracking-wider uppercase">V2.0 // Ismail</span>
+            </div>
+
+            <div class="font-mono text-red-500 text-xs mb-4 block reveal-text tracking-widest">/// ARCHITECTURAL DESIGN SYSTEM</div>
+            
+            <h1 class="font-display text-6xl md:text-9xl font-bold tracking-tighter mb-8 leading-[0.9] reveal-text text-white drop-shadow-2xl">
+                ENGINEERING <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-200 via-white to-gray-400 animate-pulse-slow">THE NEXT</span> <br>
+                <span class="text-gradient-red drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]">WEB.</span>
+            </h1>
+            
+            <p class="reveal-text text-lg md:text-xl text-gray-300 max-w-lg leading-relaxed mb-10 border-l-2 border-red-600 pl-6 font-light">
+                I am <strong class="text-white">Ismail</strong>. I merge advanced computational logic with high-end architecture to craft digital portfolios that feel like magic.
+            </p>
+            
+            <div class="flex flex-wrap gap-4 reveal-text">
+                <div class="cursor-hover px-5 py-3 bg-white/5 border border-white/10 text-xs font-mono uppercase tracking-wider hover:bg-white/10 transition-colors">PORTFOLIO EXPERT</div>
+                <div class="cursor-hover px-5 py-3 bg-white/5 border border-white/10 text-xs font-mono uppercase tracking-wider hover:bg-white/10 transition-colors">FULL STACK</div>
+                <div class="cursor-hover px-5 py-3 bg-white/5 border border-white/10 text-xs font-mono uppercase tracking-wider hover:bg-white/10 transition-colors">CREATIVE DEV</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section class="section relative z-20 bg-gradient-to-b from-transparent to-black/80">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="font-display text-5xl font-bold mb-6">THE ISMAIL METHOD</h2>
+                    <div class="h-1 w-20 bg-red-600 mb-8"></div>
+                    <p class="text-gray-400 text-lg leading-relaxed mb-6">
+                        Standard frontend development focuses on static composition. I focus on <span class="text-white font-bold">immersive motion</span>. By bypassing the constraints of the traditional DOM and leveraging GPU acceleration, I create interfaces that react at the speed of thought. 
+                    </p>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        Every scroll interaction, every micro-animation, and every transition is calculated to reduce cognitive load and increase engagement. This isn't just coding; it's high-performance digital engineering.
+                    </p>
+                </div>
+                <div class="border border-white/10 bg-white/5 p-8 rounded-2xl backdrop-blur-sm">
+                    <ul class="space-y-6">
+                        <li class="flex items-start gap-4">
+                            <span class="text-red-500 font-mono text-xl">01</span>
+                            <div>
+                                <h4 class="font-bold text-white mb-1">Human Vision</h4>
+                                <p class="text-sm text-gray-500">I define the aesthetic and the soul of the project using modern design principles.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <span class="text-red-500 font-mono text-xl">02</span>
+                            <div>
+                                <h4 class="font-bold text-white mb-1">Precision Execution</h4>
+                                <p class="text-sm text-gray-500">Handling complex WebGL shaders, math, and physics simulations.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <span class="text-red-500 font-mono text-xl">03</span>
+                            <div>
+                                <h4 class="font-bold text-white mb-1">Seamless Fusion</h4>
+                                <p class="text-sm text-gray-500">The result is a website that looks and feels alive, running at 144hz.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Expertise Grid -->
+    <section class="section">
+        <div class="max-w-7xl mx-auto w-full px-6 relative z-20">
+             <div class="mb-16">
+                <h2 class="font-display text-4xl md:text-5xl font-bold">PROFESSIONAL <span class="text-red-600">SKILLS</span></h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Card 1 -->
+                <div class="glass-panel group cursor-hover" data-tilt>
+                    <div class="flex justify-between items-start mb-10">
+                        <h3 class="font-display text-3xl md:text-4xl font-bold text-white group-hover:text-red-500 transition-colors">01. <br>Portfolio Design</h3>
+                        <div class="p-3 rounded-full bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-7 font-light tracking-wide">
+                        I specialize in creating portfolios that get you hired. I know exactly what recruiters and clients look for, and I use motion design to keep them engaged.
+                    </p>
+                    <div class="mt-8 h-px w-full bg-gradient-to-r from-red-600/50 to-transparent"></div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-panel group md:mt-24 cursor-hover" data-tilt>
+                    <div class="flex justify-between items-start mb-10">
+                        <h3 class="font-display text-3xl md:text-4xl font-bold text-white group-hover:text-red-500 transition-colors">02. <br>GSAP & Motion</h3>
+                        <div class="p-3 rounded-full bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-7 font-light tracking-wide">
+                        Mastery of the GreenSock Animation Platform. Creating complex timelines, scroll-triggered reveals, and physics-based interactions that feel organic.
+                    </p>
+                    <div class="mt-8 h-px w-full bg-gradient-to-r from-red-600/50 to-transparent"></div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-panel group cursor-hover" data-tilt>
+                    <div class="flex justify-between items-start mb-10">
+                        <h3 class="font-display text-3xl md:text-4xl font-bold text-white group-hover:text-red-500 transition-colors">03. <br>3D WebGL</h3>
+                        <div class="p-3 rounded-full bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 00-2-2M5 11V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-7 font-light tracking-wide">
+                        Creating immersive 3D backgrounds like the one you see here. No lag, full 144hz smoothness, optimized for every device from iPhones to Desktops.
+                    </p>
+                    <div class="mt-8 h-px w-full bg-gradient-to-r from-red-600/50 to-transparent"></div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="glass-panel group md:mt-24 cursor-hover" data-tilt>
+                    <div class="flex justify-between items-start mb-10">
+                        <h3 class="font-display text-3xl md:text-4xl font-bold text-white group-hover:text-red-500 transition-colors">04. <br>Performance</h3>
+                        <div class="p-3 rounded-full bg-white/5 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-7 font-light tracking-wide">
+                        Speed is a feature. I optimize the critical rendering path, manage texture memory, and ensure your site scores 100/100 on Lighthouse.
+                    </p>
+                    <div class="mt-8 h-px w-full bg-gradient-to-r from-red-600/50 to-transparent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- THE PROCESS -->
+    <section class="section relative z-20">
+        <!-- Subtle Red Backdrop for Depth -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-red-950/10 to-transparent pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto w-full px-6 relative z-20">
+            <h2 class="font-display text-5xl md:text-7xl font-bold mb-24 text-center tracking-tighter">
+                THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-800">WORKFLOW</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Step 01 -->
+                <div class="glass-panel group text-center" data-tilt>
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center justify-center w-24 h-24 mb-8 rounded-2xl bg-white/5 border border-white/10 group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-all duration-500 group-hover:rotate-6 shadow-2xl">
+                            <span class="font-display text-4xl font-bold text-gray-500 group-hover:text-red-500 transition-colors">01</span>
+                        </div>
+                        <h3 class="font-display text-3xl font-bold mb-4 text-white">Architecture</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            I blueprint the entire system first. From component hierarchy to state management, everything is planned for scalability before a single line of code is written.
+                        </p>
+                    </div>
+                    <!-- Decorative Glow -->
+                    <div class="absolute -top-20 -right-20 w-40 h-40 bg-red-600/20 rounded-full blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                </div>
+
+                <!-- Step 02 (Offset) -->
+                <div class="glass-panel group text-center md:mt-16" data-tilt>
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center justify-center w-24 h-24 mb-8 rounded-2xl bg-white/5 border border-white/10 group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-all duration-500 group-hover:-rotate-6 shadow-2xl">
+                            <span class="font-display text-4xl font-bold text-gray-500 group-hover:text-red-500 transition-colors">02</span>
+                        </div>
+                        <h3 class="font-display text-3xl font-bold mb-4 text-white">Refining</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            I manually refine the output. Tweaking physics, adjusting colors, and ensuring the UX feels responsive, tactile, and distinctly human.
+                        </p>
+                    </div>
+                    <!-- Decorative Glow -->
+                    <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-red-600/20 rounded-full blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                </div>
+
+                <!-- Step 03 -->
+                <div class="glass-panel group text-center" data-tilt>
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center justify-center w-24 h-24 mb-8 rounded-2xl bg-white/5 border border-white/10 group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-all duration-500 group-hover:rotate-6 shadow-2xl">
+                            <span class="font-display text-4xl font-bold text-gray-500 group-hover:text-red-500 transition-colors">03</span>
+                        </div>
+                        <h3 class="font-display text-3xl font-bold mb-4 text-white">Deploying</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            Launching to the world. Fast servers, secure connections, and instant global availability with 100/100 performance scores.
+                        </p>
+                    </div>
+                    <!-- Decorative Glow -->
+                    <div class="absolute -top-20 -left-20 w-40 h-40 bg-red-600/20 rounded-full blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SELECTED WORKS WITH IMMERSIVE PREVIEWS -->
+    <section class="section">
+        <div class="max-w-7xl mx-auto w-full px-6 relative z-20">
+             <div class="flex items-end justify-between mb-16">
+                <div>
+                    <h2 class="font-display text-5xl font-bold">SELECTED <span class="text-red-600">WORKS</span></h2>
+                    <p class="text-gray-500 mt-4 max-w-xl">A curation of digital products engineered by Ismail.</p>
+                </div>
+                <div class="hidden md:block text-xs font-mono text-gray-600">
+                    SCROLL TO EXPLORE ↓
+                </div>
+            </div>
+            
+            <div class="space-y-32">
+                <!-- Work 1: 3D PORTFOLIO TEMPLATE -->
+                <a href="portfolio_preview.html" class="block">
+                    <div class="flex flex-col md:flex-row gap-12 items-center group cursor-hover">
+                        <div class="w-full md:w-3/5 aspect-video bg-gray-950 border border-white/10 rounded-lg overflow-hidden relative shadow-2xl flex items-center justify-center transition-all duration-500 group-hover:border-red-500/50">
+                             <!-- CSS 3D CUBE ANIMATION -->
+                             <div class="preview-cube-scene">
+                                 <div class="cube-wireframe">
+                                     <div class="cube-face"></div>
+                                     <div class="cube-face"></div>
+                                     <div class="cube-face"></div>
+                                     <div class="cube-face"></div>
+                                     <div class="cube-face"></div>
+                                     <div class="cube-face"></div>
+                                 </div>
+                             </div>
+                             <div class="absolute bottom-6 left-8 text-xs font-mono text-red-500 animate-pulse">● IMMERSIVE 3D TEMPLATE</div>
+                             <div class="absolute inset-0 bg-black/0 group-hover:bg-red-900/5 transition-colors duration-500 pointer-events-none"></div>
+                        </div>
+                        <div class="w-full md:w-2/5">
+                            <div class="text-xs text-red-500 font-mono mb-2">TEMPLATE / WEBGL</div>
+                            <h3 class="text-3xl font-bold mb-4">Immersive Portfolio</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                A high-performance 3D portfolio template featuring 144hz fluid transitions, GSAP scroll triggers, and a reactive WebGL background. Designed to capture attention instantly.
+                            </p>
+                            <span class="inline-flex items-center text-white border-b border-red-600 pb-1 group-hover:text-red-500 transition-colors">
+                                View Preview <span class="ml-2">→</span>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Work 2: LANDING PAGE TEMPLATE -->
+                <a href="landing_page.html" class="block">
+                    <div class="flex flex-col md:flex-row-reverse gap-12 items-center group cursor-hover">
+                        <div class="w-full md:w-3/5 aspect-video bg-gray-950 border border-white/10 rounded-lg overflow-hidden relative shadow-2xl flex items-center justify-center perspective-[1000px] transition-all duration-500 group-hover:border-blue-500/50">
+                             <!-- CSS 3D FLOATING UI -->
+                             <div class="ui-stack">
+                                 <div class="ui-layer"></div>
+                                 <div class="ui-layer"></div>
+                                 <div class="ui-layer flex items-center justify-center">
+                                     <span class="text-xs font-mono text-red-400 tracking-widest">LANDING_V1</span>
+                                 </div>
+                             </div>
+                             <div class="absolute bottom-6 right-8 text-xs font-mono text-blue-400">PRODUCT LANDING PAGE</div>
+                        </div>
+                        <div class="w-full md:w-2/5 text-right md:text-left">
+                            <div class="text-xs text-blue-500 font-mono mb-2">SAAS / MARKETING</div>
+                            <h3 class="text-3xl font-bold mb-4">Modern Landing Page</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                A conversion-optimized landing page template. Features sleek CSS animations, floating UI elements, and a clean, typographic hierarchy designed for SaaS products.
+                            </p>
+                            <span class="inline-flex items-center text-white border-b border-blue-600 pb-1 group-hover:text-blue-500 transition-colors">
+                                View Preview <span class="ml-2">→</span>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact / Footer -->
+    <section id="contact" class="section justify-center items-center min-h-[80vh]">
+        <div class="max-w-4xl w-full text-center z-20">
+            <h2 class="font-display text-5xl md:text-8xl font-bold mb-8 tracking-tighter">READY TO <span class="text-gradient-red">LAUNCH?</span></h2>
+            <p class="text-gray-400 mb-12 text-lg font-light max-w-xl mx-auto">
+                Currently accepting select projects for Q4 2024. Let's use advanced technology to build something that breaks the internet.
+            </p>
+            
+            <button onclick="toggleModal()" class="cursor-hover group relative inline-flex items-center justify-center px-10 py-5 overflow-hidden font-bold text-white rounded-none bg-red-800 transition-all duration-300 hover:bg-red-700 hover:scale-105 hover:shadow-[0_0_40px_rgba(220,38,38,0.5)]">
+                <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+                <span class="relative tracking-widest uppercase">Start Project</span>
+            </button>
+
+            <!-- Social Links -->
+            <div class="flex justify-center gap-10 mt-20">
+                <a href="https://www.instagram.com/hafiz__lsmail?igsh=MTIyMmNtMGtobm5saw==" target="_blank" class="cursor-hover text-gray-500 hover:text-white transition-colors transform hover:-translate-y-1">
+                    <span class="sr-only">Instagram</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+                <a href="https://wa.me/923154995507" target="_blank" class="cursor-hover text-gray-500 hover:text-white transition-colors transform hover:-translate-y-1">
+                    <span class="sr-only">WhatsApp</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                </a>
+                <a href="mailto:hafizmismaildev@gmail.com" class="cursor-hover text-gray-500 hover:text-white transition-colors transform hover:-translate-y-1">
+                    <span class="sr-only">Email</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </a>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-0 w-full border-t border-white/5 bg-black/50 backdrop-blur-sm p-6 flex justify-between text-[10px] text-gray-500 font-mono uppercase tracking-widest">
+            <div>ISMAIL © 2024</div>
+            <div class="hidden sm:block">LAT: 34.0522 N / LONG: 118.2437 W</div>
+            <div><span class="w-2 h-2 inline-block bg-green-500 rounded-full mr-2"></span>ALL SYSTEMS OPERATIONAL</div>
+        </div>
+    </section>
+
+    <script>
+        // --- MODAL LOGIC ---
+        function toggleModal() {
+            const modal = document.getElementById('contact-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                // Prevent scrolling when modal is open
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // --- 1. SMOOTH SCROLL (LENIS) ---
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // --- 2. CUSTOM CURSOR & GLOBAL MOUSE TRACKING ---
+        const cursorDot = document.getElementById("cursor-dot");
+        const cursorOutline = document.getElementById("cursor-outline");
+        let globalMouse = { x: 0, y: 0 }; 
+
+        // Desktop Mouse
+        window.addEventListener("mousemove", function (e) {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
+
+            globalMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            globalMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // Touch Interaction
+        window.addEventListener("touchmove", function (e) {
+            const touch = e.touches[0];
+            globalMouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            globalMouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+        }, { passive: true });
+
+        // Hover Effects
+        document.querySelectorAll('.cursor-hover').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorOutline.style.width = '60px';
+                cursorOutline.style.height = '60px';
+                cursorOutline.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                cursorOutline.style.borderColor = 'transparent';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorOutline.style.width = '40px';
+                cursorOutline.style.height = '40px';
+                cursorOutline.style.backgroundColor = 'transparent';
+                cursorOutline.style.borderColor = 'rgba(220, 38, 38, 0.5)';
+            });
+        });
+
+        // --- 3. THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0000, 0.015); 
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 9;
+
+        // RESOLUTION UNCAP
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); 
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x333333, 2.0); 
+        scene.add(ambientLight);
+
+        const redLight = new THREE.PointLight(0xff0000, 5, 25);
+        redLight.position.set(2, 2, 5);
+        scene.add(redLight);
+
+        const blueRim = new THREE.PointLight(0x3b82f6, 5, 25);
+        blueRim.position.set(-5, 0, 5);
+        scene.add(blueRim);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        fillLight.position.set(0, 5, 10);
+        scene.add(fillLight);
+
+        // --- INTERACTION: RAYCASTER ---
+        const raycaster = new THREE.Raycaster();
+
+        // --- OBJECTS ---
+        const coreGroup = new THREE.Group();
+
+        // Central Polyhedron
+        const spikeGeo = new THREE.IcosahedronGeometry(0.8, 1); 
+        const spikeMat = new THREE.MeshPhysicalMaterial({
+            color: 0x991b1b,
+            metalness: 0.9,
+            roughness: 0.1,
+            emissive: 0xff0000,
+            emissiveIntensity: 1.5,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            flatShading: true
+        });
+        const spikyBall = new THREE.Mesh(spikeGeo, spikeMat);
+        coreGroup.add(spikyBall);
+
+        // Wireframe Overlay
+        const wireGeo = new THREE.IcosahedronGeometry(0.82, 1);
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0xffaaaa, wireframe: true, transparent: true, opacity: 0.3 });
+        const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+        coreGroup.add(wireMesh);
+
+        // --- SATELLITES ---
+        const satelliteGroup = new THREE.Group();
+        const satGeo = new THREE.SphereGeometry(0.15, 16, 16);
+        const satMat = new THREE.MeshStandardMaterial({
+            color: 0x00ffff, 
+            emissive: 0x00ffff,
+            emissiveIntensity: 2.0,
+            toneMapped: false
+        });
+        
+        const satellites = [];
+        for(let i=0; i<3; i++) {
+            const sat = new THREE.Mesh(satGeo, satMat);
+            sat.position.x = 2.5 + Math.random();
+            sat.userData = { angle: Math.random() * Math.PI * 2, speed: 0.02 + Math.random()*0.02, radius: 2.5 + Math.random() };
+            satelliteGroup.add(sat);
+            satellites.push(sat);
+        }
+        coreGroup.add(satelliteGroup);
+
+
+        // --- SEAL RINGS (RESTORED & SOLID) ---
+        const ringContainers = [];
+        const ringCount = 6;
+
+        // SOLID MATERIAL (NO TRANSPARENCY TO ENSURE VISIBILITY)
+        const ringMat = new THREE.MeshPhysicalMaterial({
+            color: 0xff0000,
+            metalness: 0.9,
+            roughness: 0.2,
+            emissive: 0x550000,
+            emissiveIntensity: 0.5,
+            clearcoat: 1.0,
+            side: THREE.DoubleSide,
+            transparent: false, // GUARANTEE VISIBILITY
+            opacity: 1.0 
+        });
+
+        for (let i = 0; i < ringCount; i++) {
+            const radiusStep = 0.7;
+            const startRadius = 1.5;
+            const innerRadius = startRadius + (i * radiusStep);
+            
+            const ringGeo = new THREE.TorusGeometry(innerRadius, 0.04, 16, 100); 
+            
+            // Create Mesh
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            
+            const container = new THREE.Group();
+            container.add(ringMesh);
+            coreGroup.add(container);
+            
+            // Initial State: Arranged (Flat)
+            container.rotation.x = 0;
+            container.rotation.y = 0;
+            // Initial State: Hidden by Scale (not opacity)
+            container.scale.set(0,0,0);
+
+            const targetSpeedX = (Math.random() - 0.5) * 0.2;
+            const targetSpeedY = (Math.random() - 0.5) * 0.2;
+
+            ringContainers.push({ 
+                mesh: ringMesh, 
+                container: container, 
+                currentSpeedX: 0,
+                currentSpeedY: 0,
+                targetSpeedX: targetSpeedX,
+                targetSpeedY: targetSpeedY
+            });
+        }
+
+        scene.add(coreGroup);
+
+        // Particles
+        const particlesGeo = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+        
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 40; 
+        }
+        
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({
+            size: 0.03,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particlesMesh);
+
+        // --- 4. ANIMATION LOGIC ---
+        
+        // Global time scale for entrance transition
+        let animTimeScale = 0;
+
+        // GSAP Entrance
+        const entryTl = gsap.timeline();
+        
+        // 1. SCALE UP RINGS (Guaranteed Visibility)
+        entryTl.to(ringContainers.map(rc => rc.container.scale), { 
+            x: 1, y: 1, z: 1, 
+            duration: 2.5, 
+            stagger: 0.15, 
+            ease: "elastic.out(1, 0.75)" 
+        })
+        .to(".reveal-text", { y: 0, opacity: 1, duration: 1, stagger: 0.1, ease: "power3.out" }, "-=2.0")
+        // 2. START ROTATING
+        .to({ val: 0 }, { 
+            val: 1, 
+            duration: 4, 
+            ease: "power2.inOut", 
+            onUpdate: function() { animTimeScale = this.targets()[0].val; }
+        }, "-=1.0");
+
+        // Scroll Interactions
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "body",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5
+            }
+        });
+
+        tl.to(coreGroup.position, { x: 3.5, y: -1, z: 0, ease: "power1.inOut" }, "phase1")
+          .to(coreGroup.rotation, { y: 2, x: 0.5 }, "phase1");
+
+        // --- HELPER: Project 3D World Position to 2D Screen Space ---
+        const tempV = new THREE.Vector3();
+        function getScreenPosition(obj) {
+            obj.getWorldPosition(tempV);
+            tempV.project(camera);
+            return tempV; // x and y are -1 to 1
+        }
+
+        // Define Colors for Breathing
+        const colorDeepRed = new THREE.Color(0x550000); // Dim Red
+        const colorBrightOrange = new THREE.Color(0xffaa00); // Intense Orange
+
+        // --- RENDER LOOP ---
+        function animateThree() {
+            requestAnimationFrame(animateThree);
+            
+            // 1. RINGS PROXIMITY LOGIC
+            const screenPos = getScreenPosition(spikyBall);
+            const dist = Math.hypot(globalMouse.x - screenPos.x, globalMouse.y - screenPos.y); 
+            const proximity = Math.max(0, 1 - dist * 1.5); 
+            
+            const ringSpeedMult = 1 + (proximity * 3); 
+            
+            ringContainers.forEach(rc => {
+                // Apply rotation only if size is > 0
+                if (rc.container.scale.x > 0.1) {
+                    rc.container.rotation.x += rc.targetSpeedX * animTimeScale * ringSpeedMult * 0.05;
+                    rc.container.rotation.y += rc.targetSpeedY * animTimeScale * ringSpeedMult * 0.05;
+                }
+            });
+
+            // 2. BALL GLOW LOGIC (Magma Breathing)
+            raycaster.setFromCamera(globalMouse, camera);
+            const intersects = raycaster.intersectObject(spikyBall);
+            const isHit = intersects.length > 0;
+            
+            // Time for animation
+            const time = Date.now() * 0.001;
+
+            if (isHit) {
+                // INTERACTION: Lock to Intense Yellow/Orange
+                spikyBall.material.emissiveIntensity += (10.0 - spikyBall.material.emissiveIntensity) * 0.1;
+                spikyBall.material.emissive.setHex(0xffaa00);
+            } else {
+                // IDLE: Breathe from Dim Red to Intense Orange
+                const sine = (Math.sin(time * 2.0) + 1) / 2; 
+                const targetIntensity = 1.0 + (sine * 5.0);
+                spikyBall.material.emissiveIntensity += (targetIntensity - spikyBall.material.emissiveIntensity) * 0.1;
+                spikyBall.material.emissive.copy(colorDeepRed).lerp(colorBrightOrange, sine);
+            }
+
+            // Physical size breathing
+            const breathScale = 1 + Math.sin(time) * 0.02;
+            spikyBall.scale.set(breathScale, breathScale, breathScale);
+
+            satellites.forEach(sat => {
+                sat.userData.angle += sat.userData.speed;
+                sat.position.x = Math.cos(sat.userData.angle) * sat.userData.radius;
+                sat.position.z = Math.sin(sat.userData.angle) * sat.userData.radius;
+                sat.position.y = Math.sin(sat.userData.angle * 2) * 0.5; 
+            });
+
+            coreGroup.rotation.y += 0.002 * animTimeScale; 
+            particlesMesh.rotation.y -= 0.0005;
+
+            renderer.render(scene, camera);
+        }
+        animateThree();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            const mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            
+            gsap.to(coreGroup.rotation, {
+                x: mouseY * 0.2,
+                y: mouseX * 0.2 + (coreGroup.rotation.y),
+                duration: 2,
+                ease: "power2.out"
+            });
+        });
+
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -5;
+                const rotateY = ((x - centerX) / centerX) * 5;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                card.style.transition = 'transform 0.5s ease';
+            });
+            
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'transform 0.1s ease'; 
+            });
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISMAIL | GALACTIC ARCHITECT</title>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js & Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Simplex Noise for Procedural Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Rajdhani', sans-serif;
+            color: white;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+
+        /* Cinematic Vignette */
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, black 140%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Navigation */
+        .nav-fixed {
+            position: fixed;
+            top: 30px; right: 30px;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 30px;
+            font-size: 12px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .nav-fixed:hover { background: white; color: black; }
+
+        .brand-logo {
+            position: fixed;
+            top: 30px; left: 30px;
+            z-index: 100;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            letter-spacing: 4px;
+            pointer-events: none;
+        }
+
+        /* SCROLL CONTENT SECTIONS */
+        .scroll-section {
+            height: 100vh;
+            position: relative;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .content-box {
+            background: rgba(5, 10, 15, 0.9);
+            border-left: 4px solid #00f0ff;
+            padding: 40px;
+            max-width: 550px;
+            backdrop-filter: blur(10px);
+            opacity: 0; /* Controlled by GSAP */
+            transform: translateY(50px);
+            margin-left: 10%;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+        }
+
+        .right-align {
+            margin-left: auto;
+            margin-right: 10%;
+            border-left: none;
+            border-right: 4px solid #ffaa00;
+            text-align: right;
+        }
+
+        .center-align {
+            margin: 0 auto;
+            text-align: center;
+            border: 1px solid #a020f0;
+            background: rgba(20, 0, 20, 0.95);
+        }
+
+        h1, h2 { font-family: 'Orbitron', sans-serif; margin-bottom: 10px; }
+        p { font-size: 18px; line-height: 1.6; color: #ccc; margin-bottom: 20px; }
+        .tag { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; display: block; font-weight: bold; }
+
+        /* SCROLL PROGRESS */
+        .progress-bar {
+            position: fixed;
+            right: 0; top: 0;
+            width: 4px;
+            height: 0%;
+            background: #00f0ff;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WORLD -->
+    <div id="canvas-container"></div>
+    <div class="vignette"></div>
+    <div class="progress-bar" id="progress"></div>
+
+    <!-- UI -->
+    <div class="brand-logo">ISMAIL<span class="text-blue-500">.DEV</span></div>
+    <a href="index.html" class="nav-fixed">Main Hub</a>
+    
+    <!-- SCROLL STORYLINE -->
+    <div id="scroll-container">
+        
+        <!-- SECTION 1: SUN (Core Skills) -->
+        <div class="scroll-section" id="sec-sun">
+            <div class="content-box">
+                <span class="tag text-yellow-400">Core Engine</span>
+                <h1 class="text-5xl font-bold">FRONTEND SPECIALIST</h1>
+                <p>
+                    I build high-performance web interfaces that convert visitors into clients. Specializing in pixel-perfect landing pages that load instantly and look stunning on every device.
+                </p>
+                <div class="text-xs font-mono text-gray-500">HTML5 // CSS3 // JAVASCRIPT</div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: EARTH (Portfolios) -->
+        <div class="scroll-section" id="sec-earth">
+            <div class="content-box right-align" style="border-color: #4488ff;">
+                <span class="tag text-blue-400">Digital Identity</span>
+                <h2 class="text-4xl font-bold">PORTFOLIO DESIGN</h2>
+                <p>
+                    Your portfolio is your digital handshake. I craft immersive personal websites for developers, designers, and creatives that showcase your work with cinematic elegance.
+                </p>
+                <div class="text-xs font-mono text-gray-500">REACT // THREE.JS // TAILWIND</div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: JUPITER (Landing Pages) -->
+        <div class="scroll-section" id="sec-jupiter">
+            <div class="content-box" style="border-color: #ffaa00;">
+                <span class="tag text-orange-400">Conversion Power</span>
+                <h2 class="text-4xl font-bold">LANDING PAGES</h2>
+                <p>
+                    I engineer landing pages designed to sell. Whether it's a SaaS product or a creative agency, I build layouts that guide the user's eye and drive action.
+                </p>
+                <div class="text-xs font-mono text-gray-500">GSAP ANIMATION // RESPONSIVE LAYOUTS</div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: KEPLER (New Planet - Innovation) -->
+        <div class="scroll-section" id="sec-kepler">
+            <div class="content-box right-align" style="border-color: #00ffaa;">
+                <span class="tag text-green-400">Future Tech</span>
+                <h2 class="text-4xl font-bold">NEXT-GEN UI</h2>
+                <p>
+                    Moving beyond static grids. I implement 3D elements, fluid transitions, and micro-interactions that make your website feel like a native app.
+                </p>
+            </div>
+        </div>
+
+        <!-- SECTION 5: BLACK HOLE (Contact) -->
+        <div class="scroll-section" id="sec-blackhole">
+            <div class="content-box center-align">
+                <span class="tag text-purple-400">Singularity</span>
+                <h2 class="text-6xl font-bold mb-6">START PROJECT</h2>
+                <p class="mb-8">
+                    Ready to launch your new portfolio or landing page? Let's build something that defies expectations.
+                </p>
+                <a href="mailto:hafizmismaildev@gmail.com" class="inline-block bg-white text-black px-8 py-4 font-bold tracking-widest hover:bg-blue-500 hover:text-white transition-colors pointer-events-auto rounded-sm text-sm">
+                    CONTACT ISMAIL
+                </a>
+                <div class="mt-4 text-xs font-mono text-gray-400">hafizmismaildev@gmail.com</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.0005);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20000);
+        camera.position.set(0, 40, 150); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const simplex = new SimplexNoise();
+
+        // --- 2. TEXTURE ENGINE (Auto-Load + Procedural Fallback) ---
+        // This ensures it works on Localhost AND Live Server
+        
+        const textureLoader = new THREE.TextureLoader();
+
+        // High-Quality Procedural Generator (Digital planets while images load)
+        function generatePlanetTexture(type, colorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const w = 1024, h = 512;
+
+            ctx.fillStyle = colorHex; ctx.fillRect(0,0,w,h);
+
+            if (type === 'noise' || type === 'rock') {
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                for(let i=0; i<3000; i++) {
+                    ctx.beginPath(); ctx.arc(Math.random()*w, Math.random()*h, Math.random()*2, 0, Math.PI*2); ctx.fill();
+                }
+            } else if (type === 'cloudy') {
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                for(let i=0; i<5000; i++) {
+                    ctx.fillRect(Math.random()*w, Math.random()*h, 4, 2);
+                }
+            } else if (type === 'bands') {
+                const grad = ctx.createLinearGradient(0,0,0,h);
+                grad.addColorStop(0, colorHex);
+                grad.addColorStop(0.5, '#444');
+                grad.addColorStop(1, colorHex);
+                ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // Smart Loader: Tries URL, keeps procedural if fails
+        function loadTexture(url, fallbackType, fallbackColor) {
+            const tex = generatePlanetTexture(fallbackType, fallbackColor); // Start with digital
+            
+            // Try loading image (Will succeed on Live Server, Fail on Desktop double-click)
+            textureLoader.load(url, (loaded) => {
+                tex.image = loaded.image;
+                tex.needsUpdate = true;
+            });
+            return tex;
+        }
+
+        // --- 3. MATERIALS ---
+        // Automatically looks for textures/filename.jpg
+        const mats = {
+            sun: new THREE.MeshBasicMaterial({ map: loadTexture('textures/sun.jpg', 'noise', '#ffaa00') }),
+            mercury: new THREE.MeshStandardMaterial({ map: loadTexture('textures/mercury.jpg', 'rock', '#aaaaaa'), roughness: 0.9 }),
+            venus: new THREE.MeshStandardMaterial({ map: loadTexture('textures/venus.jpg', 'cloudy', '#eecb8b'), roughness: 0.5 }),
+            earth: new THREE.MeshStandardMaterial({ map: loadTexture('textures/earth.jpg', 'noise', '#1c4e91'), roughness: 0.5, metalness: 0.1 }),
+            mars: new THREE.MeshStandardMaterial({ map: loadTexture('textures/mars.jpg', 'rock', '#c1440e'), roughness: 0.8 }),
+            jupiter: new THREE.MeshStandardMaterial({ map: loadTexture('textures/jupiter.jpg', 'bands', '#c99039'), roughness: 0.4 }),
+            kepler: new THREE.MeshStandardMaterial({ map: loadTexture('textures/kepler.jpg', 'cloudy', '#00ffaa'), roughness: 0.4, metalness: 0.2, emissive: 0x003322 }), // Exotic
+            uranus: new THREE.MeshStandardMaterial({ map: loadTexture('textures/uranus.jpg', 'cloudy', '#4fd0e7'), roughness: 0.4 }),
+            bg: new THREE.MeshBasicMaterial({ map: loadTexture('textures/galaxy.jpg', 'noise', '#050510'), side: THREE.BackSide })
+        };
+
+        // --- 4. SCENE OBJECTS ---
+
+        // SUN
+        const sun = new THREE.Mesh(new THREE.SphereGeometry(15, 64, 64), mats.sun);
+        scene.add(sun);
+        const sunLight = new THREE.PointLight(0xffffff, 2, 800);
+        sun.add(sunLight);
+        scene.add(new THREE.AmbientLight(0x404040, 0.1));
+
+        // Glow
+        const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: new THREE.CanvasTexture((function(){
+                const c = document.createElement('canvas'); c.width=64; c.height=64;
+                const ctx=c.getContext('2d');
+                const g=ctx.createRadialGradient(32,32,0,32,32,32);
+                g.addColorStop(0,'rgba(255,180,50,1)'); g.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle=g; ctx.fillRect(0,0,64,64); return c;
+            })()), 
+            color: 0xffaa00, blending: THREE.AdditiveBlending
+        }));
+        sunGlow.scale.set(70, 70, 1);
+        sun.add(sunGlow);
+
+        // HELPER: CREATE PLANET & CLEAR ORBIT
+        function createPlanet(mesh, distance, size, orbitColor='#ffffff') {
+            const group = new THREE.Group();
+            const angle = Math.random() * Math.PI * 2;
+            group.position.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+            group.add(mesh);
+            scene.add(group);
+
+            // Orbit Line
+            const orbitGeo = new THREE.RingGeometry(distance-0.1, distance+0.1, 256);
+            const orbitMat = new THREE.MeshBasicMaterial({ 
+                color: orbitColor, 
+                side: THREE.DoubleSide, 
+                transparent: true, 
+                opacity: 0.3, 
+                blending: THREE.AdditiveBlending 
+            });
+            const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
+
+            return { group, mesh, distance };
+        }
+
+        // --- PLANETS SETUP ---
+        const pMercury = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), mats.mercury), 30, 1.5, '#555555');
+        const pVenus = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(3, 32, 32), mats.venus), 45, 3, '#aa8855');
+        const pEarth = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(3.5, 32, 32), mats.earth), 65, 3.5, '#4488ff');
+        const pMars = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), mats.mars), 85, 2.5, '#ff4400');
+        const pJupiter = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(11, 32, 32), mats.jupiter), 130, 11, '#cc9955');
+        const pKepler = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(7, 32, 32), mats.kepler), 180, 7, '#00ffaa'); 
+        const pUranus = createPlanet(new THREE.Mesh(new THREE.SphereGeometry(6, 32, 32), mats.uranus), 220, 6, '#4fd0e7');
+
+        // BLACK HOLE
+        const bhGroup = new THREE.Group();
+        bhGroup.position.set(0, 0, 450); 
+        const eh = new THREE.Mesh(new THREE.SphereGeometry(18, 32, 32), new THREE.MeshBasicMaterial({color:0x000000}));
+        bhGroup.add(eh);
+        const disk = new THREE.Mesh(new THREE.TorusGeometry(35, 10, 32, 100), new THREE.MeshBasicMaterial({ color: 0xaa00ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending }));
+        disk.scale.y = 0.1;
+        disk.rotation.x = 0.5;
+        bhGroup.add(disk);
+        scene.add(bhGroup);
+
+        // Stars
+        const bg = new THREE.Mesh(new THREE.SphereGeometry(1000, 64, 64), mats.bg);
+        scene.add(bg);
+
+
+        // --- 5. SCROLL TIMELINE (THE JOURNEY) ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "body",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5,
+                onUpdate: (self) => document.getElementById('progress').style.height = (self.progress * 100) + '%'
+            }
+        });
+
+        // Camera Flight Path
+        tl.to(camera.position, { x: pEarth.group.position.x + 12, y: 6, z: pEarth.group.position.z + 12, duration: 4, ease: "power1.inOut" }) // To Earth
+          .to("#sec-sun .content-box", { opacity: 0, scale: 0.8 }, "<")
+          .to("#sec-earth .content-box", { opacity: 1, y: 0, duration: 2 }, "-=2");
+
+        tl.to(camera.position, { x: pJupiter.group.position.x - 25, y: 12, z: pJupiter.group.position.z + 25, duration: 4, ease: "power1.inOut" }) // To Jupiter
+          .to("#sec-earth .content-box", { opacity: 0 }, "<")
+          .to("#sec-jupiter .content-box", { opacity: 1, y: 0, duration: 2 }, "-=2");
+
+        tl.to(camera.position, { x: pKepler.group.position.x + 15, y: 8, z: pKepler.group.position.z + 15, duration: 4, ease: "power1.inOut" }) // To Kepler
+          .to("#sec-jupiter .content-box", { opacity: 0 }, "<")
+          .to("#sec-kepler .content-box", { opacity: 1, y: 0, duration: 2 }, "-=2");
+
+        tl.to(camera.position, { x: bhGroup.position.x, y: 15, z: bhGroup.position.z - 70, duration: 5, ease: "power2.in" }) // To Black Hole
+          .to("#sec-kepler .content-box", { opacity: 0 }, "<")
+          .to("#sec-blackhole .content-box", { opacity: 1, y: 0, duration: 2 }, "-=2");
+
+
+        // --- 6. ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            sun.rotation.y += 0.002;
+            pMercury.mesh.rotation.y += 0.01;
+            pVenus.mesh.rotation.y += 0.008;
+            pEarth.mesh.rotation.y += 0.01;
+            pMars.mesh.rotation.y += 0.01;
+            pJupiter.mesh.rotation.y += 0.02;
+            pKepler.mesh.rotation.y += 0.015;
+            pUranus.mesh.rotation.y += 0.01;
+            disk.rotation.z -= 0.02;
+
+            camera.lookAt(0, 0, 0);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
